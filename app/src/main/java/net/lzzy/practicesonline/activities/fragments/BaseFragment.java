@@ -39,7 +39,7 @@ public abstract class BaseFragment extends Fragment {
      * Fragment的布局文件id
      * @retutn 布局资源id
      */
-    public abstract int getLayoutRes();
+    protected abstract int getLayoutRes();
     <T extends View> T find(@IdRes int id){
         return  getView().findViewById(id);
     }

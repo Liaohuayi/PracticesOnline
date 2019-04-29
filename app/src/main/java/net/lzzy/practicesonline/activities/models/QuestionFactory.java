@@ -24,7 +24,7 @@ public class QuestionFactory {
 
     private QuestionFactory() {
         repository=new SqlRepository<>(AppUtils.getContext(),Question.class, DbConstants.packager);
-
+        optionRepoaitory=new SqlRepository<>(AppUtils.getContext(),Option.class,DbConstants.packager);
     }
 
     private void completeQuestion(Question question) {
@@ -70,6 +70,7 @@ public class QuestionFactory {
         List<String> sqlActions = new ArrayList<>();
         for (Option option : options) {
             sqlActions.add(optionRepoaitory.getInsertString(option));
+
         }
         sqlActions.add(repository.getInsertString(question));
         repository.exeSqls(sqlActions);

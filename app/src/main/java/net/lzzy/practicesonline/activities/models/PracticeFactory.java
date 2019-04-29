@@ -2,11 +2,11 @@ package net.lzzy.practicesonline.activities.models;
 ;
 import net.lzzy.practicesonline.activities.constants.DbConstants;
 import net.lzzy.practicesonline.activities.utils.AppUtils;
-import net.lzzy.sqllib.DbPackager;
 import net.lzzy.sqllib.SqlRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by lzzy_gxy on 2019/4/17.
@@ -51,12 +51,63 @@ public class PracticeFactory {
 
     public boolean isPracticeInDb(Practice practice) {
         try {
-            return repository.getByKeyword(String.valueOf(practice.getApild()),
-                    new String[]{Practice.COL_APILD}, true)
+            return repository.getByKeyword(String.valueOf(practice.getApiId()),
+                    new String[]{Practice.COL_API_ID}, true)
                     .size() > 0;
         } catch (IllegalAccessException | InstantiationException e) {
             e.printStackTrace();
             return true;
         }
     }
+
+    private void setPracticeDown(String id) {
+        Practice practice = getById(id);
+        if (practice != null) {
+            practice.setDownloaded(true);
+            repository.update(practice);
+        }
+    }
+
+    public void saveQuestions(List<Question> list, UUID id) {
+        for (Question q : list) {
+            QuestionFactory.getInstance().inset(q);
+        }
+        setPracticeDown(id.toString());
+    }
+
+
+    public UUID getPracticeId(int apiId) {
+        try {
+            List<Practice> practices = repository.getByKeyword(String.valueOf(apiId)
+                    , new String[]{Practice.COL_API_ID}, true);
+            if (practices.size() > 0) {
+                return practices.get(0).getId();
+            }
+        } catch (IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean deletePracticeAndRelated(Practice practice) {
+        try {
+            List<String> sqlAction = new ArrayList<>();
+            sqlAction.add(repository.getDeleteString(practice));
+            QuestionFactory factory = QuestionFactory.getInstance();
+            List<Question> questions = factory.getByPractice(practice.getId().toString());
+            if (questions.size() > 0) {
+                for (Question q : questions) {
+                    sqlAction.addAll(factory.getDeleteString(q));
+                }
+            }
+            repository.exeSqls(sqlAction);
+            if (!isPracticeInDb(practice)){
+
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }

@@ -109,11 +109,15 @@ public class Question extends BaseEntity implements Sqlitable, Jsonable {
         List<Option>options= null;
         try {
             options = QuestionService.getOptionFromJson(strOption,strAnswers);
+            for (Option option:options){
+                option.setQuestionId(id);
+            }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
             e.printStackTrace();
         }
+
         setOptions(options);
     }
 

@@ -36,6 +36,7 @@ public class QuestionFactory {
         } catch (IllegalAccessException |InstantiationException e) {
             e.printStackTrace();
         }
+
         question.setOptions(options);
         question.setDbType(question.getDbType());
     }

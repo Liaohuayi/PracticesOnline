@@ -14,7 +14,9 @@ public class ApiConstants {
     private static final String IP= AppUtils.loadServerSetting(AppUtils.getContext()).first;
     private static final String PORT=AppUtils.loadServerSetting(AppUtils.getContext()).second;
     private static final String PROTOCOl="http://";
-
+    /**
+     * API地址
+     */
     public static final String URL_API=PROTOCOl.concat(IP).concat(":").concat(PORT);
     /**
      * questions地址
@@ -38,6 +40,13 @@ public class ApiConstants {
     public static final String JSON_PRACTICE_QUESTION_COUNT="QuestionCount";
 
     /**
+     * 提交结果
+     */
+    public static final String ACTION_RESULT = "/api/result/PracticeResult";
+    public static final String URL_RESULT = URL_API.concat(ACTION_RESULT);
+
+
+    /**
      * Question的json标签
      */
     public static final String JSON_QUESTION_ANALYSIS="Analysis";
@@ -50,4 +59,12 @@ public class ApiConstants {
     public static final String JSON_OPTION_LABEL="Label";
     public static final String JSON_OPTION_API_ID="Id";
     public static final String JSON_ANSWER_OPTION_ID="OptionId";
+
+
+    public static final String JSON_RESULT_API_ID="PracticeID";
+    public static final String JSON_RESULT_SCORE_RATION="ScroreRatio";
+    public static final String JSON_RESULT_WRONG_IDS="WrongQuestionIds";
+    public static final String JSON_RESULT_PERSON_INFO="PhoneNo";
+
+
 }

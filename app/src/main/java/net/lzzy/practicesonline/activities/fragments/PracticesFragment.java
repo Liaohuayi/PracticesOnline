@@ -84,7 +84,7 @@ public class PracticesFragment extends BaseFragment {
             switch (msg.what) {
                 case WHAT_PRACTICE_DONE:
                     practicesFragment.tvTime.setText(DateTimeUtils.DATE_TIME_FORMAT.format(new Date()));
-                    UserCookies.getInstance().updateLastRefreshTime();
+                    UserCookies.getInstance().updateLastReferencesTime();
                     try {
                         List<Practice> practices = PracticeService.getPractices(msg.obj.toString());
                         for (Practice practice : practices) {
@@ -179,7 +179,7 @@ public class PracticesFragment extends BaseFragment {
             super.onPostExecute(s);
             PracticesFragment fragment = this.fragment.get();
             fragment.tvTime.setText(DateTimeUtils.DATE_TIME_FORMAT.format(new Date()));
-            UserCookies.getInstance().updateLastRefreshTime();
+            UserCookies.getInstance().updateLastReferencesTime();
             try {
                 List<Practice> practices = PracticeService.getPractices(s);
                 for (Practice practice : practices) {
@@ -461,7 +461,7 @@ public class PracticesFragment extends BaseFragment {
         swipe = find(R.id.fragment_practices_swipe);
         tvHint = find(R.id.fragment_practices_tv_hint);
         tvTime = find(R.id.fragment_practices_tv_time);
-        tvTime.setText(UserCookies.getInstance().getLastRefreshTime());
+        tvTime.setText(UserCookies.getInstance().getLastRefrshTime());
         tvHint.setVisibility(View.GONE);
         tvTime.setVisibility(View.GONE);
         swipe.setColorSchemeColors((Color.parseColor("#CD853F")), Color.parseColor("#CD853F"));

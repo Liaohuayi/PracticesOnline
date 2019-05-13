@@ -5,12 +5,14 @@ import net.lzzy.sqllib.AsPrimaryKey;
 import java.util.UUID;
 
 /**
- * Created by lzzy_gxy on 2019/4/16.
+ *
+ * @author lzzy_gxy
+ * @date 2019/3/11
  * Description:
  */
 public class BaseEntity {
     @AsPrimaryKey
-    protected UUID id;
+    UUID id;
     BaseEntity(){
         id = UUID.randomUUID();
     }
@@ -22,5 +24,4 @@ public class BaseEntity {
     public UUID getId() {
         return id;
     }
-
 }

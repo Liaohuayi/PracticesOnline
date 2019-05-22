@@ -12,7 +12,9 @@ import androidx.fragment.app.Fragment;
 
 
 /**
- * Created by lzzy_gxy on 2019/3/27.
+ *
+ * @author lzzy_gxy
+ * @date 2019/3/27
  * Description:
  */
 public abstract class BaseFragment extends Fragment {
@@ -40,7 +42,7 @@ public abstract class BaseFragment extends Fragment {
      * @retutn 布局资源id
      */
     protected abstract int getLayoutRes();
-    <T extends View> T find(@IdRes int id){
+    protected <T extends View> T find(@IdRes int id){
         return  getView().findViewById(id);
     }
 

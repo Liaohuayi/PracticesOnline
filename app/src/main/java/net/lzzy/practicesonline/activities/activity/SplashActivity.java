@@ -137,10 +137,12 @@ public  class SplashActivity extends BaseActivity implements FragmentSplash.OnSp
         return new FragmentSplash();
     }
 
+
     @Override
     public void cancelCount() {
        seconds=0;
     }
+
 
     @Override
     public void onBackPressed(){

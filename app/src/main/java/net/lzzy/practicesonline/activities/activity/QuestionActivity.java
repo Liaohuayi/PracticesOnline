@@ -1,6 +1,10 @@
 package net.lzzy.practicesonline.activities.activity;
 
+
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Parcelable;
@@ -10,7 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentStatePagerAdapter;
@@ -18,6 +22,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import net.lzzy.practicesonline.R;
 import net.lzzy.practicesonline.activities.fragments.QuestionFragment;
+import net.lzzy.practicesonline.activities.models.FavoriteFactory;
 import net.lzzy.practicesonline.activities.models.Question;
 import net.lzzy.practicesonline.activities.models.QuestionFactory;
 import net.lzzy.practicesonline.activities.models.UserCookies;
@@ -29,33 +34,35 @@ import net.lzzy.practicesonline.activities.utils.AppUtils;
 import net.lzzy.practicesonline.activities.utils.ViewUtils;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Administrator
- */
+
 public class QuestionActivity extends AppCompatActivity {
-    public static final int WHAT=0;
-    public static final int WHAT1=1;
-    public static final String EXTRA_PRACTICE_ID="extraPracticeId";
-    public static final int WHAT2=2;
+
+    public static final int OK = 0;
+    public static final int NO = 1;
+    public static final int RETRY = 2;
+    public static final int RESPONSE_OK_MIN = 200;
+    public static final int RESPONSE_OK_MAX = 220;
+    public static final String EXTRA_PRACTICE_ID = "extraPracticeId";
     public static final String EXTRA_RESULT = "extraResult";
     public static final int REQUEST_CODE_RESULT = 0;
     private String practiceId;
-    private  int apiId;
+    private int apiId;
     private List<Question> questions;
+    private boolean isCommitted = false;
     private TextView tvView;
     private TextView tvCommit;
     private ViewPager pager;
-    private boolean isCommitted=false;
     private TextView tvHint;
     private FragmentStatePagerAdapter adapter;
     private int pos;
+    private LinearLayout container;
     private View[] dots;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,156 +71,234 @@ public class QuestionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_question);
         AppUtils.addAvtivity(this);
         retrieveData();
-        initViews();
+        initView();
         initDots();
         setListeners();
-        pos=UserCookies.getInstance().getCurrentQuestion(practiceId);
+        pos = UserCookies.getInstance().getCurrentQuestion(practiceId);
         pager.setCurrentItem(pos);
         refreshDots(pos);
         UserCookies.getInstance().updateReadCount(questions.get(pos).getId().toString());
     }
 
+
     private void setListeners() {
+
         pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
             }
+
             @Override
             public void onPageSelected(int position) {
                 refreshDots(position);
-                UserCookies.getInstance().updateCurrentQuestion(practiceId,position);
+                UserCookies.getInstance().updateCurrentQuestion(practiceId, position);
                 UserCookies.getInstance().updateReadCount(questions.get(position).getId().toString());
-
             }
 
             @Override
             public void onPageScrollStateChanged(int state) {
-
+                tvCommit.setOnClickListener(v -> commitPractice());
+                tvView.setOnClickListener(v -> redirect());
             }
         });
-        tvCommit.setOnClickListener(v->commitPractice());
-        tvView.setOnClickListener(v->redirect());
     }
 
     private void redirect() {
-        List<QuestionResult> results =UserCookies.getInstance().getResultFromCookies(questions);
-        Intent intent=new Intent(this,ResultActivity.class);
-        intent.putExtra(EXTRA_PRACTICE_ID,practiceId);
+        List<QuestionResult> results = UserCookies.getInstance().getResultFromCookies(questions);
+        Intent intent = new Intent(this, ResultActivity.class);
+        intent.putExtra(EXTRA_PRACTICE_ID, practiceId);
         intent.putParcelableArrayListExtra(EXTRA_RESULT, (ArrayList<? extends Parcelable>) results);
         startActivityForResult(intent, REQUEST_CODE_RESULT);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        //todo:返回查看数据 查看题目或收藏
+
+        if (data != null) {
+            if (data.getBooleanExtra(ResultActivity.ENSHRINE, false)) {
+                FavoriteFactory favoriteFactory = FavoriteFactory.getInstance();
+                List<Question> cc = new ArrayList<>();
+                for (Question question : questions) {
+                    if (favoriteFactory.isQuestionStarred(question.getId().toString())){
+                        cc.add(question);
+                    }
+                }
+                questions.clear();
+                questions.addAll(cc);
+                initDots();
+                adapter.notifyDataSetChanged();
+            } else {
+             int page=data.getIntExtra(ResultActivity.QUESTION, 0);
+                if (page>=0){
+                    pos=page;
+                    pager.setCurrentItem(pos,true);
+                }
+            }
+        }
 
     }
 
     //region 提交成绩
-
     String info;
+
     private void commitPractice() {
-        List<QuestionResult>results=UserCookies.getInstance().getResultFromCookies(questions);
-        List<String>macs=AppUtils.getMacAddress();
-        String[]items=new String[macs.size()];
+        List<QuestionResult> results = UserCookies.getInstance().getResultFromCookies(questions);
+        List<String> macs = AppUtils.getMacAddress();
+        String[] items = new String[macs.size()];
         macs.toArray(items);
-        info=items[0];
+        info = items[0];
         new AlertDialog.Builder(this)
                 .setTitle("选择Mac地址")
-                .setSingleChoiceItems(items,0,(dialog, which) -> info=items[which])
-                .setNegativeButton("取消",null)
-                .setPositiveButton("提交",(dialog, which) -> {
-                    PracticeResult result=new PracticeResult(results,apiId,"廖华毅"+info);
+                .setSingleChoiceItems(items, 0, (dialog, which) -> info = items[which])
+                .setNegativeButton("取消", null)
+                .setPositiveButton("提交", (dialog, which) -> {
+                    PracticeResult result = new PracticeResult(results, apiId, "周陈凯," + info);
                     postResult(result);
                 }).show();
     }
-    private QuestionActivity.CountHandler handler = new QuestionActivity.CountHandler(this);
-    public static class CountHandler extends AbstractStaticHandler<QuestionActivity> {
-        CountHandler(QuestionActivity context) {
-            super(context);
-        }
+    //endregion
 
-        @Override
-        public void handleMessage(Message msg, QuestionActivity questionActivity) {
-            switch (msg.what){
-                case WHAT:
-                    questionActivity.isCommitted=true;
-                    Toast.makeText(questionActivity, "提交成功", Toast.LENGTH_SHORT).show();
-                    break;
-                case WHAT1:
-                    Toast.makeText(questionActivity, "提交失败", Toast.LENGTH_SHORT).show();
-                    break;
-                case WHAT2:
-                    Toast.makeText(questionActivity, "提交失败", Toast.LENGTH_SHORT).show();
-                    break;
-                    default:
-                        break;
-            }
-        }
-    }
 
     private void postResult(PracticeResult result) {
         AppUtils.getExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    int r= PracticeService.postResult(result);
-                    if (r>=200&&r<=220){
-                        handler.sendEmptyMessage(WHAT);
-                    }else {
-                        handler.sendEmptyMessage(WHAT1);
+                    int cc = PracticeService.postResult(result);
+                    if (cc >= 200 && cc <= 220) {
+                        handler.sendEmptyMessage(OK);
+                    } else {
+                        handler.sendEmptyMessage(NO);
                     }
-                } catch (IOException | JSONException e) {
+                } catch (JSONException | IOException e) {
                     e.printStackTrace();
-                    handler.sendEmptyMessage(WHAT2);
+                    handler.sendEmptyMessage(RETRY);
                 }
             }
         });
 
+//        ViewUtils.showProgress(this,"正在提交...");
+//        AppUtils.getExectuor().execute(()->{
+//            try {
+//                int code=PracticeService.postResult(result);
+//                handler.sendEmptyMessage(handler.obtainMessage());
+//            } catch (JSONException |IOException e) {
+//                e.printStackTrace();
+//
+//            }
+//        });
+
     }
-    //endregion
+
+    private CountHandler handler = new CountHandler(this);
+
+    private class CountHandler extends AbstractStaticHandler<QuestionActivity> {
+        CountHandler(QuestionActivity context) {
+            super(context);
+        }
+
+        /**
+         * 处理信息的业务逻辑
+         *
+         * @param msg              message对象
+         * @param questionActivity activity or fragment对象
+         */
+        @Override
+        public void handleMessage(Message msg, QuestionActivity questionActivity) {
+
+//            ViewUtils.dismissPrgress();
+//            if (msg.what == OK) {
+//                int code = (int) msg.obj;
+//                if (code >= RESPONSE_OK_MIN &&code<= RESPONSE_OK_MAX){
+//                    Toast.makeText(questionActivity, "提交成功", Toast.LENGTH_SHORT).show();
+//                    UserCookies.getInstance().commitPractice(questionActivity.practiceId);
+//                    questionActivity.redirect();
+//                }else {
+//                    Toast.makeText(questionActivity, "提交失败，请重试", Toast.LENGTH_SHORT).show();
+//                }
+//            }else if (msg.what==NO){
+//                Toast.makeText(questionActivity, "提交失败，请重试\n"+msg.obj, Toast.LENGTH_SHORT).show();
+//            }
+
+            switch (msg.what) {
+                case OK:
+                    isCommitted = true;
+                    UserCookies.getInstance().commitPractice(practiceId);
+                    Toast.makeText(questionActivity, "提交成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case NO:
+                    Toast.makeText(questionActivity, "提交失败", Toast.LENGTH_SHORT).show();
+                    break;
+                case RETRY:
+                    Toast.makeText(questionActivity, "重试", Toast.LENGTH_SHORT).show();
+                default:
+                    break;
+            }
+        }
+
+    }
 
     private void initDots() {
-        int count=questions.size();
-        dots=new View[count];
-        LinearLayout container=findViewById(R.id.activity_question_dots);
+
+//        for (int i = 0; i < questions.size(); i++) {
+//            ImageButton button = new ImageButton(this);
+//            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewPager.LayoutParams.WRAP_CONTENT, ViewPager.LayoutParams.MATCH_PARENT);
+//            params.leftMargin = 10;
+//            params.bottomMargin = 10;
+//            button.setImageResource(R.drawable.dot_fill_style);
+//            layoutDots.addView(button,params);
+        //     }
+
+        int count = questions.size();
+        dots = new View[count];
         container.removeAllViews();
-        int px=ViewUtils.dp2px(16,this);
-        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(px,px);
-        px=ViewUtils.dp2px(5,this);
-        params.setMargins(px,px,px,px);
-        for (int i= 0;i < count;i++){
-            TextView tvDot=new TextView(this);
+        int px = ViewUtils.dp2px(20, this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(px, px);
+        px = ViewUtils.dp2px(5, this);
+        params.setMargins(px, px, px, px);
+        for (int i = 0; i < count; i++) {
+            TextView tvDot = new TextView(this);
             tvDot.setLayoutParams(params);
             tvDot.setBackgroundResource(R.drawable.dot_style);
             tvDot.setTag(i);
-            //todo:tvDot添加监听
+            tvDot.setOnClickListener(v -> pager.setCurrentItem((Integer) v.getTag()));
             container.addView(tvDot);
-            dots[i]=tvDot;
+            dots[i] = tvDot;
         }
     }
 
-    private void refreshDots(int pos){
-        for (int i=0;i<dots.length;i++){
-            int drawable=i==pos?R.drawable.dot_fill_style:R.drawable.dot_style;
+    private void refreshDots(int pos) {
+        for (int i = 0; i < dots.length; i++) {
+            int drawable = i == pos ? R.drawable.dot_fill_style : R.drawable.dot_style;
             dots[i].setBackgroundResource(drawable);
         }
     }
 
-    private void initViews() {
-        tvView=findViewById(R.id.activity_question_tv_view);
-        tvCommit=findViewById(R.id.activity_question_tv_commit);
-        tvHint=findViewById(R.id.activity_question_tv_hint);
-        pager=findViewById(R.id.activity_question_pager);
-        if (isCommitted){
+    private void initView() {
+        tvView = findViewById(R.id.activity_question_tv_view);
+        tvCommit = findViewById(R.id.activity_question_tv_commit);
+        pager = findViewById(R.id.activity_question_pager);
+        tvHint = findViewById(R.id.activity_question_tv_hint);
+        container = findViewById(R.id.activity_question_dots);
+        isCommitted = UserCookies.getInstance().isPracticeCommitted(practiceId);
+        if (isCommitted) {
             tvCommit.setVisibility(View.GONE);
             tvView.setVisibility(View.VISIBLE);
             tvHint.setVisibility(View.VISIBLE);
-        }else {
+        } else {
             tvView.setVisibility(View.GONE);
-            tvCommit.setVisibility(View.VISIBLE);
             tvHint.setVisibility(View.GONE);
+            tvCommit.setVisibility(View.VISIBLE);
         }
-        adapter=new FragmentStatePagerAdapter(getSupportFragmentManager()) {
+        adapter = new FragmentStatePagerAdapter(getSupportFragmentManager()) {
+
             @Override
             public Fragment getItem(int position) {
-                Question question=questions.get(position);
-                return QuestionFragment.newInstance(question.getId().toString(),position,isCommitted);
+                Question question = questions.get(position);
+                return QuestionFragment.newInstance(question.getId().toString(), position, isCommitted);
             }
 
             @Override
@@ -224,25 +309,20 @@ public class QuestionActivity extends AppCompatActivity {
         pager.setAdapter(adapter);
     }
 
-    private void retrieveData(){
-    practiceId=getIntent().getStringExtra(PracticesActivity.PRACTICES_ID);
-    apiId=getIntent().getIntExtra(PracticesActivity.API_ID,-1);
-    questions= QuestionFactory.getInstance().getByPractice(practiceId);
-    if (apiId<0||questions==null||questions.size()==0){
-        Toast.makeText(this,"no question",Toast.LENGTH_SHORT).show();
-        finish();
-    }
+    private void retrieveData() {
+        practiceId = getIntent().getStringExtra(PracticesActivity.PRACTICES_ID);
+        apiId = getIntent().getIntExtra(PracticesActivity.API_ID, -1);
+        questions = QuestionFactory.getInstance().getByPractice(practiceId);
+        isCommitted = UserCookies.getInstance().isPracticeCommitted(practiceId);
+        if (apiId < 0 || questions == null || questions.size() == 0) {
+            Toast.makeText(this, "no question", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        AppUtils.removeActivity(this);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         AppUtils.setRunning(getLocalClassName());
     }
 

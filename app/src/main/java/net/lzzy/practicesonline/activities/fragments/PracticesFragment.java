@@ -103,10 +103,10 @@ public class PracticesFragment extends BaseFragment {
                 case WHAT_QUESTION_DONE:
                     UUID practiceId = practicesFragment.factory.getPracticeId(msg.arg1);
                     practicesFragment.saveQuestion(msg.obj.toString(), practiceId);
-                    ViewUtils.dismissPreogress();
+                    ViewUtils.dismissPrgress();
                     break;
                 case WHAT_QUESTION_EXCEPTION:
-                    ViewUtils.dismissPreogress();
+                    ViewUtils.dismissPrgress();
                     Toast.makeText(practicesFragment.getContext(), "下载失败请重试\n" + msg.obj.toString(), Toast.LENGTH_SHORT).show();
                     break;
                 default:
@@ -227,7 +227,7 @@ public class PracticesFragment extends BaseFragment {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             fragment.get().saveQuestion(s, practice.getId());
-            ViewUtils.dismissPreogress();
+            ViewUtils.dismissPrgress();
         }
 
     }
@@ -360,7 +360,7 @@ public class PracticesFragment extends BaseFragment {
 
                 int visible = isDelete ? View.VISIBLE : View.GONE;
                 btnDel.setVisibility(visible);
-                viewHolder.getConvertView().setOnTouchListener(new ViewUtils.AbstractTouchListener() {
+                viewHolder.getConvertView().setOnTouchListener(new ViewUtils.AbstractTouchHandler() {
                     @Override
                     public boolean handleTouch(MotionEvent event) {
                         slideToDelete(event, btnDel, practice);
@@ -466,7 +466,7 @@ public class PracticesFragment extends BaseFragment {
         tvTime.setVisibility(View.GONE);
         swipe.setColorSchemeColors((Color.parseColor("#CD853F")), Color.parseColor("#CD853F"));
         /** 判断触摸是否需要取消删除模式 **/
-        find(R.id.fragment_practices_lv).setOnTouchListener(new ViewUtils.AbstractTouchListener() {
+        find(R.id.fragment_practices_lv).setOnTouchListener(new ViewUtils.AbstractTouchHandler() {
             @Override
             public boolean handleTouch(MotionEvent event) {
                 isDelete = false;
@@ -518,5 +518,6 @@ public class PracticesFragment extends BaseFragment {
          * @param practiceId
          */
         void onPracticesSelected(String practiceId, int apiId);
+
     }
 }

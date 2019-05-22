@@ -22,7 +22,9 @@ import net.lzzy.practicesonline.activities.utils.AppUtils;
 import net.lzzy.practicesonline.activities.utils.ViewUtils;
 
 /**
- * Created by lzzy_gxy on 2019/4/16.
+ *
+ * @author lzzy_gxy
+ * @date 2019/4/16
  * Description:
  */
 public class PracticesActivity extends BaseActivity implements PracticesFragment.OnPracticesSelectedListener {
@@ -100,7 +102,7 @@ public class PracticesActivity extends BaseActivity implements PracticesFragment
     private void initView() {
         SearchView search = findViewById(R.id.bar_title_search);
         search.setQueryHint("关键字搜索");
-        search.setOnQueryTextListener(new ViewUtils.AbstractQueryListener() {
+        search.setOnQueryTextListener(new ViewUtils.AbstractQueryHandler() {
             @Override
             public void handleQuery(String kw) {
                 ((PracticesFragment) getFragment()).search(kw);
@@ -141,6 +143,7 @@ public class PracticesActivity extends BaseActivity implements PracticesFragment
     protected Fragment createFragment() {
         return new PracticesFragment();
     }
+
 
     @Override
     public void onPracticesSelected(String practicesId, int apiId) {

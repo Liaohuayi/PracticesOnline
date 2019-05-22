@@ -1,12 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/activity_result_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/activity_result_circle_btn_view"
-        android:textSize="25sp"
+    <GridView
+        android:id="@+id/fragment_grid_gv_circle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="25dp"
+        android:columnWidth="90dp"
+        android:gravity="center"
+        android:horizontalSpacing="8dp"
+        android:numColumns="5"
+        android:stretchMode="columnWidth"
+        android:verticalSpacing="8dp">
+
+    </GridView>
+
+    <TextView
+        android:id="@+id/fragment_grid_circle_tv_look"
+        style="@style/WhiteBoldText"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_gravity="end|bottom"

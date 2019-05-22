@@ -108,7 +108,6 @@ public class QuestionFragment extends BaseFragment {
         }
     }
 
-
     private void displayQuestion() {
         isMulti = question.getType() == QuestionType.MULTI_CHOICE;
         int label = pos + 1;
